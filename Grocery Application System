@@ -1,0 +1,157 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+public class GroceryDeliveryApp {
+    private JFrame frame;
+    private JPanel mainPanel;
+    private CardLayout cardLayout;
+    private BrowsePanel browsePanel;
+    private CartPanel cartPanel;
+    private OrderPanel orderPanel;
+    
+    private Map<String, Double> groceries;
+    private Map<String, Integer> cart;
+    
+    public GroceryDeliveryApp() {
+        groceries = new HashMap<>();
+        cart = new HashMap<>();
+        
+        // Sample grocery items
+        groceries.put("Apple", 0.5);
+        groceries.put("Banana", 0.3);
+        groceries.put("Carrot", 0.2);
+        groceries.put("Dairy Milk", 1.5);
+        groceries.put("Eggs", 2.0);
+        
+        frame = new JFrame("Grocery Delivery Application");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
+        
+        cardLayout = new CardLayout();
+        mainPanel = new JPanel(cardLayout);
+        
+        browsePanel = new BrowsePanel();
+        cartPanel = new CartPanel();
+        orderPanel = new OrderPanel();
+        
+        mainPanel.add(browsePanel, "Browse");
+        mainPanel.add(cartPanel, "Cart");
+        mainPanel.add(orderPanel, "Order");
+        
+        frame.add(mainPanel);
+        frame.setVisible(true);
+        
+        cardLayout.show(mainPanel, "Browse");
+    }
+    
+    private class BrowsePanel extends JPanel {
+        public BrowsePanel() {
+            setLayout(new BorderLayout());
+            
+            JPanel itemsPanel = new JPanel(new GridLayout(0, 1));
+            for (String item : groceries.keySet()) {
+                JButton button = new JButton(item + " - $" + groceries.get(item));
+                button.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        if (cart.containsKey(item)) {
+                            cart.put(item, cart.get(item) + 1);
+                        } else {
+                            cart.put(item, 1);
+                        }
+                    }
+                });
+                itemsPanel.add(button);
+            }
+            
+            add(new JScrollPane(itemsPanel), BorderLayout.CENTER);
+            
+            JButton viewCartButton = new JButton("View Cart");
+            viewCartButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    cartPanel.updateCart();
+                    cardLayout.show(mainPanel, "Cart");
+                }
+            });
+            add(viewCartButton, BorderLayout.SOUTH);
+        }
+    }
+    
+    private class CartPanel extends JPanel {
+        private JTextArea cartTextArea;
+        
+        public CartPanel() {
+            setLayout(new BorderLayout());
+            
+            cartTextArea = new JTextArea();
+            add(new JScrollPane(cartTextArea), BorderLayout.CENTER);
+            
+            JButton checkoutButton = new JButton("Checkout");
+            checkoutButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    orderPanel.setOrderDetails(cart);
+                    cart.clear();
+                    cardLayout.show(mainPanel, "Order");
+                }
+            });
+            add(checkoutButton, BorderLayout.SOUTH);
+        }
+        
+        public void updateCart() {
+            StringBuilder cartContent = new StringBuilder();
+            double total = 0.0;
+            for (String item : cart.keySet()) {
+                int quantity = cart.get(item);
+                double price = groceries.get(item) * quantity;
+                cartContent.append(item).append(" x ").append(quantity).append(" = $").append(price).append("\n");
+                total += price;
+            }
+            cartContent.append("Total: $").append(total);
+            cartTextArea.setText(cartContent.toString());
+        }
+    }
+    
+    private class OrderPanel extends JPanel {
+        private JTextArea orderDetailsTextArea;
+        
+        public OrderPanel() {
+            setLayout(new BorderLayout());
+            
+            orderDetailsTextArea = new JTextArea();
+            add(new JScrollPane(orderDetailsTextArea), BorderLayout.CENTER);
+            
+            JButton backToBrowseButton = new JButton("Back to Browse");
+            backToBrowseButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    cardLayout.show(mainPanel, "Browse");
+                }
+            });
+            add(backToBrowseButton, BorderLayout.SOUTH);
+        }
+        
+        public void setOrderDetails(Map<String, Integer> cart) {
+            StringBuilder orderDetails = new StringBuilder();
+            double total = 0.0;
+            for (String item : cart.keySet()) {
+                int quantity = cart.get(item);
+                double price = groceries.get(item) * quantity;
+                orderDetails.append(item).append(" x ").append(quantity).append(" = $").append(price).append("\n");
+                total += price;
+            }
+            orderDetails.append("Total: $").append(total);
+            orderDetailsTextArea.setText(orderDetails.toString());
+        }
+    }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new GroceryDeliveryApp();
+            }
+        });
+    }
+}
